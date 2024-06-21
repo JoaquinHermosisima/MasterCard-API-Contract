@@ -1,0 +1,2426 @@
+<html>
+    <style>
+        body {
+            max-width: 960px;
+            margin: auto;
+            font-family: Verdana;
+        }
+        .code-wrapper {
+            background-color: #1e1e1e;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        code {
+            font-family: Consolas;
+            font-size: 16px;
+            color: white;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        table {
+            width: 960px;
+            border: 2px solid black;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .json-key {
+            color: #fbbc04;
+        }
+        .json-value {
+            color: #46bdc6
+        }
+        #backToTopBtn {
+            display: none; /* Initially hidden */
+            position: fixed;
+            bottom: 20px; /* Adjust as needed */
+            right: 20px; /* Adjust as needed */
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            cursor: pointer;
+            z-index: 99; /* Ensure it's above other content */
+        }
+    </style>
+
+
+    <script>
+        function show(shown, hidden) {
+            document.getElementById(shown).style.display='block';
+            hidden.split(' ').forEach(function(id) {
+                document.getElementById(id).style.display = 'none';
+            });
+        return false;
+        }
+
+        function scrollToTop() {
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        window.onscroll = function() {
+            scrollFunction();
+        };
+
+        function scrollFunction() {
+            var backToTopBtn = document.getElementById("backToTopBtn");
+            if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+                backToTopBtn.style.display = "block";
+            } else {
+                backToTopBtn.style.display = "none";
+            }
+        }
+        const copyContent = async (button) => {
+        try {
+            const wrapper = button.closest('.code-wrapper');
+            if (!wrapper) return;
+
+            const jsonText = wrapper.querySelector('code').innerText;
+            await navigator.clipboard.writeText(jsonText);
+            console.log('Content copied to clipboard');
+        } catch (err) {
+            console.error('Failed to copy: ', err);
+        }
+    }
+    </script>
+
+    <body>
+        
+        <h1>MasterCard API ⇔ DSP Use Cases</h1>
+        <hr>
+        <a href="#" onclick="return show('Page1','Page2 Page3 Page4 Page5');">[POST] /agreement-retrievals</a> <br>
+        <a href="#" onclick="return show('Page2','Page1 Page3 Page4 Page5');">[POST] /agreements/{agreement_id}/updates</a> <br>
+        <a href="#" onclick="return show('Page3','Page1 Page2 Page4 Page5');">[POST] /agreement-payment-requests</a> <br>
+        <a href="#" onclick="return show('Page4','Page1 Page2 Page3 Page5');">[POST] /payment-requests/{payment_request_lifecycle_id}/step-up-advices</a> <br>
+        <a href="#" onclick="return show('Page5','Page1 Page2 Page3 Page4');">[POST] /payment-requests/{payment_request_lifecycle_id}/payment-confirmation-advices</a>
+        <hr>
+        
+<div id="Page1">
+
+
+    <h2 style="color: rebeccapurple">[POST] /agreement-retrievals</h2>
+    <p>
+        Enables DSP to retrieve agreement details, 
+        either agreementId or agreementReferenceNumber 
+        must be provided to retrieve agreement details.
+    </p>
+
+    <h3> Request Header Dictionary </h3>
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td>X-Request-ID</td>
+            <td>Yes</td>
+            <td>
+                Each API request has an associated request identifier. 
+                It can be used to match the response to the request and 
+                used for tracing, troubleshooting and analysis purposes.
+            </td>
+        </tr>
+        <tr>
+            <td>X-Product-ID</td>
+            <td>Yes</td>
+            <td>
+                Unique identifier assigned to the product by Mastercard and given to the participant.
+            </td>
+        </tr>
+        <tr>
+            <td>X-Participant-ID</td>
+            <td>Yes</td>
+            <td>
+                Unique identifier assigned to the participant by Mastercard during onboarding.
+            </td>
+        </tr>
+        <tr>
+            <td>X-JWS-Signature</td>
+            <td>Yes</td>
+            <td>
+                JWS detached signature is applied to ensure data integrity.
+            </td>
+        </tr>
+    </table>
+
+    <h3> Sample Request Header </h3>
+        <div class="code-wrapper">
+            <pre>
+    <code>{
+        "<span class="json-key">X-Request-ID</span>" : "<span class="json-value">7eab4eab35a542e085add0363a49c035</span>",
+        "<span class="json-key">X-Product-ID</span>" : "<span class="json-value">PBARFP</span>",
+        "<span class="json-key">X-Participant-ID</span>" : "<span class="json-value">000545</span>",
+        "<span class="json-key">X-JWS-Signature</span>" : "<span class="json-value">eyJhbGciOiJSUzI1NiIsImtpZCI6Ik1LMGlrb1k3NFpNdUhnbncwSG1MNnpSbi9rRT0iLCJpYXQiOiIxNjc1OTYyMjA3IiwiY3JpdCI6WyJpYXQiXX0..XRHc_Q7mp49sr0CDL6Ps97uz4Lhl3XG_--JfeZrkj-4LK-3gzc7HsN0Jq4UjO_NX5ZlVp_tfL_GE1g9-vUT0NCfXmfbBXYEaC9CgFZIoU9F2PBegdZwHHmkDbu-5-t6kd2xo4UhaQ5VP1quWOD5yAs2a6MlQstT1iT-gPIW1teaiz4lgCmqbcTo6umjLKL-QsYvJ53Ngtb5rrF5WWQ1WKpGeq_PP1hGYbxDzcYBNZqGed-dXuGqpkWJ85JENJyOKDoskWM6cgs6OAjrmjTIFQ0qdfal91SUQtzJ49nbAiqMpROh79uYJ024jgtcQ_StqYJyJWYdLeUv1ge-kDJN0fw</span>",
+    }</code>
+        </pre>
+        <button class="copy-button" onclick="copyContent(this)">Copy</button>
+        </div>
+
+    <h3> Request Body Dictionary </h3>
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>initiatingPartyId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Unique identifier of the message sender.
+            </td>
+            <td>"000545"</td>
+        </tr>
+        <tr>
+            <td>messageId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                A point-to-point unique identifier is assigned to every message by the message initiator.
+            </td>
+            <td>
+                "7eab4eab35a542e085add0363a49c035"
+            </td>
+        </tr>
+        <tr>
+            <td>creationDateTime</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                ISO 8601 format date and time in Coordinated Universal Time (UTC) when this message was created.
+            </td>
+            <td>
+                "2020-11-20T06:57:24.465Z"
+            </td>
+        </tr>
+        <tr>
+            <td>businessType</td>
+            <td>Yes</td>
+            <td>number</td>
+            <td>
+                Unique identifier assigned by Mastercard to define the commercial product construct.
+            </td>
+            <td>
+                3
+            </td>
+        </tr>
+    </table>
+
+    <br>
+
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>debtorId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Unique identifier of the Debtor provided to Mastercard by the DSP.
+            </td>
+            <td>
+                "Fxrsi5345"
+            </td>
+        </tr>
+        <tr>
+            <td>debtorServiceProviderId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Unique identifier assigned to the DSP during Mastercard onboarding.
+            </td>
+            <td>
+                "000369"
+            </td>
+        </tr>
+    </table>
+
+    <br>
+
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>agreementId</td>
+            <td></td>
+            <td>String</td>
+            <td>
+                Unique identifier assigned by Mastercard to the agreement.
+            </td>
+            <td>
+                "a3e2a749088440eab8b40c926efe2931"
+            </td>
+        </tr>
+        <tr>
+            <td>agreementReferenceNumber</td>
+            <td></td>
+            <td>String</td>
+            <td>
+                Unique 6 digit reference used by DSP to retrieve the create agreement request.
+            </td>
+            <td>
+                "122549"
+            </td>
+        </tr>
+    </table>
+
+    <h3> Sample Request Body </h3>
+        <div class="code-wrapper">
+        <pre>
+    <code>{ 
+        "<span class="json-key">initiatingPartyId</span>" : "<span class="json-value">000545</span>", 
+        "<span class="json-key">messageId</span>" : "<span class="json-value">7eab4eab35a542e085add0363a49c035</span>", 
+        "<span class="json-key">creationDateTime</span>" : "<span class="json-value">2020-11-20T06:57:24.465Z</span>", 
+        "<span class="json-key">businessType</span>" : "<span class="json-value">3</span>", 
+        "<span class="json-key">debtor</span>" : { 
+            "<span class="json-key">debtorId</span>" : "<span class="json-value">Fxrsi5345</span>", 
+            "<span class="json-key">debtorServiceProviderId</span>" : "<span class="json-value">000369</span>" 
+        }, 
+        "<span class="json-key">agreement</span>" : { 
+            "<span class="json-key">agreementId</span>" : "<span class="json-value">a3e2a749088440eab8b40c926efe2931</span>", 
+            "<span class="json-key">agreementReferenceNumber</span>" : "<span class="json-value">122549</span>" 
+        } 
+    }</code>
+        </pre>
+        <button class="copy-button" onclick="copyContent(this)">Copy</button>
+        </div>
+
+    <h3> Response Header Dictionary </h3>
+    <table>
+    <tr>
+        <th>Parameter Name</th>
+        <th>Type</th>
+        <th>Description</th>
+    </tr>
+    <tr>
+        <td>X-Request-ID</td>
+        <td>String</td>
+        <td>
+            Each API request has an associated request identifier. 
+            It can be used to match the response to the request and 
+            used for tracing, troubleshooting and analysis purposes.
+        </td>
+    </tr>
+    <tr>
+        <td>X-Product-ID</td>
+        <td>String</td>
+        <td>
+            Unique identifier assigned to the product by Mastercard and given to the participant.
+        </td>
+    </tr>
+    <tr>
+        <td>X-Participant-ID</td>
+        <td>String</td>
+        <td>
+            Unique identifier assigned to the participant by Mastercard during onboarding.
+        </td>
+    </tr>
+    <tr>
+        <td>X-JWS-Signature</td>
+        <td>String</td>
+        <td>
+            JWS detached signature is applied to ensure data integrity.
+        </td>
+    </tr>
+    </table>
+
+    <h3> Sample Response Header </h3>
+        <div class="code-wrapper">
+    <pre>
+    <code>{
+        "<span class="json-key">X-Request-ID</span>" : "<span class="json-value">7eab4eab35a542e085add0363a49c035</span>",
+        "<span class="json-key">X-Product-ID</span>" : "<span class="json-value">PBARFP</span>",
+        "<span class="json-key">X-Participant-ID</span>" : "<span class="json-value">000545</span>",
+        "<span class="json-key">X-JWS-Signature</span>" : "<span class="json-value">eyJhbGciOiJSUzI1NiIsImtpZCI6Ik1LMGlrb1k3NFpNdUhnbncwSG1MNnpSbi9rRT0iLCJpYXQiOiIxNjc1OTYyMjA3IiwiY3JpdCI6WyJpYXQiXX0..XRHc_Q7mp49sr0CDL6Ps97uz4Lhl3XG_--JfeZrkj-4LK-3gzc7HsN0Jq4UjO_NX5ZlVp_tfL_GE1g9-vUT0NCfXmfbBXYEaC9CgFZIoU9F2PBegdZwHHmkDbu-5-t6kd2xo4UhaQ5VP1quWOD5yAs2a6MlQstT1iT-gPIW1teaiz4lgCmqbcTo6umjLKL-QsYvJ53Ngtb5rrF5WWQ1WKpGeq_PP1hGYbxDzcYBNZqGed-dXuGqpkWJ85JENJyOKDoskWM6cgs6OAjrmjTIFQ0qdfal91SUQtzJ49nbAiqMpROh79uYJ024jgtcQ_StqYJyJWYdLeUv1ge-kDJN0fw</span>",
+    }</code>
+    </pre>
+    <button class="copy-button" onclick="copyContent(this)">Copy</button>
+        </div>
+    
+    <h3> Response Body Dictionary </h3>
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>initiatingPartyId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Unique identifier of the message sender.
+            </td>
+            <td>"ZAPP"</td>
+        </tr>
+        <tr>
+            <td>messageId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                A point-to-point unique identifier is assigned to every message by the message initiator.
+            </td>
+            <td>
+                "3bef00e542ec4be583b1b5d449799084"
+            </td>
+        </tr>
+        <tr>
+            <td>creationDateTime</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                ISO 8601 format date and time in Coordinated Universal Time (UTC) when this message was created.
+            </td>
+            <td>
+                "2020-11-20T06:57:24.465Z"
+            </td>
+        </tr>
+        <tr>
+            <td>originalMessageId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Original message identifier generated and sent by the initiator of the request message.
+            </td>
+            <td>
+                "7eab4eab35a542e085add0363a49c035"
+            </td>
+        </tr>
+        <tr>
+            <td>confirmationExpiryTimeInterval</td>
+            <td>Yes</td>
+            <td>number</td>
+            <td>
+                Time window given in seconds within which the Agreement Confirmation must be received by the Mastercard.
+            </td>
+            <td>
+                150
+            </td>
+        </tr>
+    </table>
+
+    <br>
+
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>creditorId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Unique identifier assigned to the Creditor by the CSP.
+            </td>
+            <td>
+                "VerizonoMobile000588"
+            </td>
+        </tr>
+        <tr>
+            <td>creditorServiceProviderId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Unique identifier assigned to the CSP during Mastercard onboarding.
+            </td>
+            <td>
+                "000645"
+            </td>
+        </tr>
+        <tr>
+            <td>creditorTradeName</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Name used by the Creditor in dealing with customers, which may not be the same as the one it uses for legal purposes.
+            </td>
+            <td>
+                "VerizonoMobileLtd"
+            </td>
+        </tr>
+        <tr>
+            <td>creditorCategoryCode</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                The category code of the Creditor, also known as Merchant Category Code (MCC). Enables the classification of Creditors into specific categories based on the type of business, trade or services supplied.
+            </td>
+            <td>
+                "0742"
+            </td>
+        </tr>
+        <tr>
+            <td>creditorLogoUrl</td>
+            <td></td>
+            <td>String</td>
+            <td>
+                Creditor's Logo (in URL encoded format). Can be used by the Debtor to display the Creditor's Logo.
+            </td>
+            <td>
+                https://www.cdn.com/creditorlogourl"
+            </td>
+        </tr>
+        <tr>
+            <td>creditorReturnString</td>
+            <td></td>
+            <td>String</td>
+            <td>
+                Return String (in URL encoded format) that is passed to the DSP to return the Debtor back to the Creditor's page.
+            </td>
+            <td>
+                "https://www.creditor.com/creditorreturnString"
+            </td>
+        </tr>
+    </table>
+
+    <br>
+
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>agreementId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Unique identifier assigned by Mastercard to the agreement.
+            </td>
+            <td>
+                "a3e2a749088440eab8b40c926efe2931"
+            </td>
+        </tr>
+        <tr>
+            <td>agreementType</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Creditor requesting DSP to display to Debtor to setup Agreement during payment confirmation.
+            </td>
+            <td>
+                "AOF"
+            </td>
+        </tr>
+        <tr>
+            <td>agreementStatus</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Status of the Agreement.
+            </td>
+            <td>
+                "INPR"
+            </td>
+        </tr>
+    </table>
+
+    <h3> Sample Response Body </h3>
+        <div class="code-wrapper">
+            <pre>
+    <code>{
+        "<span class="json-key">initiatingPartyId</span>" : "<span class="json-value">ZAPP</span>",
+        "<span class="json-key">messageId</span>" : "<span class="json-value">3bef00e542ec4be583b1b5d449799084</span>",
+        "<span class="json-key">creationDateTime</span>" : "<span class="json-value">2020-11-20T06:57:24.465Z</span>",
+        "<span class="json-key">originalMessageId</span>" : "<span class="json-value">7eab4eab35a542e085add0363a49c035</span>",
+        "<span class="json-key">confirmationExpiryTimeInterval</span>" : "<span class="json-value">150</span>",
+        "<span class="json-key">creditor</span>" : {
+            "<span class="json-key">creditorId</span>" : "<span class="json-value">VerizonoMobile000588</span>",
+            "<span class="json-key">creditorServiceProviderId</span>" : "<span class="json-value">000645</span>",
+            "<span class="json-key">creditorTradeName</span>" : "<span class="json-value">VerizonoMobileLtd</span>",
+            "<span class="json-key">creditorCategoryCode</span>" : "<span class="json-value">0742</span>",
+            "<span class="json-key">creditorLogoUrl</span>" : "<span class="json-value">https://www.cdn.com/creditorlogourl</span>",
+            "<span class="json-key">creditorReturnString</span>" : "<span class="json-value">https://www.creditor.com/creditorreturnString</span>"
+        },
+        "<span class="json-key">agreement</span>" : {
+            "<span class="json-key">agreementId</span>" : "<span class="json-value">a3e2a749088440eab8b40c926efe2931</span>",
+            "<span class="json-key">agreementType</span>" : "<span class="json-value">AOF</span>",
+            "<span class="json-key">agreementStatus</span>" : "<span class="json-value">INPR</span>"
+        }
+    }</code>
+            </pre>
+            <button class="copy-button" onclick="copyContent(this)">Copy</button>
+        </div>
+ 
+    <hr>
+    <br><br>
+</div>
+
+<div id="Page2" style="display:none">
+
+    <h2 style="color: rebeccapurple">[POST] /agreements/{agreement_id}/updates</h2>
+    <p>Enables DSP to update agreement status to Approved or Rejected or Deleted or update account nickname. Nickname must be supplied when agreement status is Approved.</p>
+    <ul>
+        <li>Update Status - status can be updated from in progress to approved or rejected, when it is approved nickname has to be provided.</li>
+        <li>Update Nickname - agreementId and nickname has be to supplied.</li>
+        <li>Delete Agreement - status can be updated from approved to deleted.</li>
+    </ul>
+
+    <h3> Request Header Dictionary</h3>
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td>X-Request-ID</td>
+            <td>Yes</td>
+            <td>
+                Each API request has an associated request identifier. 
+                It can be used to match the response to the request and 
+                used for tracing, troubleshooting and analysis purposes.
+            </td>
+        </tr>
+        <tr>
+            <td>X-Product-ID</td>
+            <td>Yes</td>
+            <td>
+                Unique identifier assigned to the product by Mastercard and given to the participant.
+            </td>
+        </tr>
+        <tr>
+            <td>X-Participant-ID</td>
+            <td>Yes</td>
+            <td>
+                Unique identifier assigned to the participant by Mastercard during onboarding.
+            </td>
+        </tr>
+        <tr>
+            <td>X-JWS-Signature</td>
+            <td>Yes</td>
+            <td>
+                JWS detached signature is applied to ensure data integrity.
+            </td>
+        </tr>
+        <tr>
+            <td>Idempotency-Key</td>
+            <td>Yes</td>
+            <td>
+                Unique identifier generated by the participant. Mastercard uses this identifier to recognize subsequent retries of the same request and ensure idempotent behaviour by sending the same response without repeating the operation again.
+            </td>
+        </tr>
+        <tr>
+            <td>agreement_id</td>
+            <td>Yes</td>
+            <td>
+                Unique identifier assigned by Mastercard, to the agreement, to be used in Payment Requests for routing them to the destined participant.
+            </td>
+        </tr>
+    </table>
+
+    <h3> Sample Request Header </h3>
+        <div class="code-wrapper">
+            <pre>
+    <code>{
+        "<span class="json-key">X-Request-ID</span>" : "<span class="json-value">7eab4eab35a542e085add0363a49c035</span>",
+        "<span class="json-key">X-Product-ID</span>" : "<span class="json-value">PBARFP</span>",
+        "<span class="json-key">X-Participant-ID</span>" : "<span class="json-value">000545</span>",
+        "<span class="json-key">X-JWS-Signature</span>" : "<span class="json-value">eyJhbGciOiJSUzI1NiIsImtpZCI6Ik1LMGlrb1k3NFpNdUhnbncwSG1MNnpSbi9rRT0iLCJpYXQiOiIxNjc1OTYyMjA3IiwiY3JpdCI6WyJpYXQiXX0..XRHc_Q7mp49sr0CDL6Ps97uz4Lhl3XG_--JfeZrkj-4LK-3gzc7HsN0Jq4UjO_NX5ZlVp_tfL_GE1g9-vUT0NCfXmfbBXYEaC9CgFZIoU9F2PBegdZwHHmkDbu-5-t6kd2xo4UhaQ5VP1quWOD5yAs2a6MlQstT1iT-gPIW1teaiz4lgCmqbcTo6umjLKL-QsYvJ53Ngtb5rrF5WWQ1WKpGeq_PP1hGYbxDzcYBNZqGed-dXuGqpkWJ85JENJyOKDoskWM6cgs6OAjrmjTIFQ0qdfal91SUQtzJ49nbAiqMpROh79uYJ024jgtcQ_StqYJyJWYdLeUv1ge-kDJN0fw</span>",
+        "<span class="json-key">Idempotency-Key</span>" : "<span class="json-value">7da7a728-f910-11e6-942a-68f728c1ba70</span>"
+        "<span class="json-key">agreement_id</span>" : "<span class="json-value">923123123123123100</span>"
+    }</code>
+        </pre>
+        <button class="copy-button" onclick="copyContent(this)">Copy</button>
+        </div>
+
+    <h3> Request Body Dictionary </h3>
+    <table>
+            <tr>
+                <th>Parameter Name</th>
+                <th style="color:red">Required?</th>
+                <th>Type</th>
+                <th>Description</th>
+                <th>Example</th>
+            </tr>
+            <tr>
+                <td>initiatingPartyId</td>
+                <td>Yes</td>
+                <td>String</td>
+                <td>
+                    Unique identifier of the message sender.
+                </td>
+                <td>"000545"</td>
+            </tr>
+            <tr>
+                <td>messageId</td>
+                <td>Yes</td>
+                <td>String</td>
+                <td>
+                    A point-to-point unique identifier is assigned to every message by the message initiator.
+                </td>
+                <td>
+                    "7eab4eab35a542e085add0363a49c035"
+                </td>
+            </tr>
+            <tr>
+                <td>creationDateTime</td>
+                <td>Yes</td>
+                <td>String</td>
+                <td>
+                    ISO 8601 format date and time in Coordinated Universal Time (UTC) when this message was created.
+                </td>
+                <td>
+                    "2020-11-20T06:57:24.465Z"
+                </td>
+            </tr>
+            <tr>
+                <td>businessType</td>
+                <td>Yes</td>
+                <td>number</td>
+                <td>
+                    Unique identifier assigned by Mastercard to define the commercial product construct.
+                </td>
+                <td>
+                    3
+                </td>
+            </tr>
+    </table>
+
+    <br>
+
+    <table>
+            <tr>
+                <th>Parameter Name</th>
+                <th style="color:red">Required?</th>
+                <th>Type</th>
+                <th>Description</th>
+                <th>Example</th>
+            </tr>
+            <tr>
+                <td>debtorId</td>
+                <td>Yes</td>
+                <td>String</td>
+                <td>
+                    Unique identifier of the Debtor provided to Mastercard by the DSP.
+                </td>
+                <td>
+                    "Fxrsi5345"
+                </td>
+            </tr>
+            <tr>
+                <td>debtorServiceProviderId</td>
+                <td>Yes</td>
+                <td>String</td>
+                <td>
+                    Unique identifier assigned to the DSP during Mastercard onboarding.
+                </td>
+                <td>
+                    "000369"
+                </td>
+            </tr>
+    </table>
+
+    <br>
+
+    <table>
+            <tr>
+                <th>Parameter Name</th>
+                <th style="color:red">Required?</th>
+                <th>Type</th>
+                <th>Description</th>
+                <th>Example</th>
+            </tr>
+            <tr>
+                <td>agreementId</td>
+                <td>Yes</td>
+                <td>String</td>
+                <td>
+                    Unique identifier assigned by Mastercard to the agreement.
+                </td>
+                <td>
+                    "a3e2a749088440eab8b40c926efe2931"
+                </td>
+            </tr>
+            <tr>
+                <td>agreementStatus</td>
+                <td></td>
+                <td>String</td>
+                <td>
+                    Status of the Agreement updated by DSP to either Approved or Rejected or Deleted.
+                </td>
+                <td>
+                    "APPR"
+                </td>
+            </tr>
+            <tr>
+                <td>agreementStatusReason</td>
+                <td></td>
+                <td>String</td>
+                <td>
+                    Reason provided by DSP when agreement status is rejected.
+                </td>
+                <td>
+                    "SYSP"
+                </td>
+            </tr>
+            <tr>
+                <td>accountNickname</td>
+                <td></td>
+                <td>String</td>
+                <td>
+                    Nickname updated by DSP. Nickname must be supplied when agreement status is Approved.
+                </td>
+                <td>
+                    "bankname_account"
+                </td>
+            </tr>
+    </table>
+
+    <h3> Sample Request Body </h3>
+        <div class="code-wrapper">
+            <pre>
+    <code>{ 
+        "<span class="json-key">initiatingPartyId</span>" : "<span class="json-value">000545</span>", 
+        "<span class="json-key">messageId</span>" : "<span class="json-value">7eab4eab35a542e085add0363a49c035</span>", 
+        "<span class="json-key">creationDateTime</span>" : "<span class="json-value">2020-11-20T06:57:24.465Z</span>", 
+        "<span class="json-key">businessType</span>" : "<span class="json-value">3</span>", 
+        "<span class="json-key">debtor</span>" : { 
+            "<span class="json-key">debtorId</span>" : "<span class="json-value">Fxrsi5345</span>", 
+            "<span class="json-key">debtorServiceProviderId</span>" : "<span class="json-value">000369</span>" 
+        }, 
+        "<span class="json-key">agreement</span>" : { 
+            "<span class="json-key">agreementId</span>" : "<span class="json-value">a3e2a749088440eab8b40c926efe2931</span>", 
+            "<span class="json-key">agreementStatus</span>" : "<span class="json-value">APPR</span>",
+            "<span class="json-key">agreementStatusReason</span>" : "<span class="json-value">SYSP</span>",
+            "<span class="json-key">accountNickname</span>" : "<span class="json-value">bankname_account</span>" 
+        } 
+    }</code>
+            </pre>
+            <button class="copy-button" onclick="copyContent(this)">Copy</button>
+        </div>
+
+    <h3> Response Header Dictionary</h3>
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th>Type</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td>X-Request-ID</td>
+            <td>String</td>
+            <td>
+                Each API request has an associated request identifier. 
+                It can be used to match the response to the request and 
+                used for tracing, troubleshooting and analysis purposes.
+            </td>
+        </tr>
+        <tr>
+            <td>X-Product-ID</td>
+            <td>String</td>
+            <td>
+                Unique identifier assigned to the product by Mastercard and given to the participant.
+            </td>
+        </tr>
+        <tr>
+            <td>X-Participant-ID</td>
+            <td>String</td>
+            <td>
+                Unique identifier assigned to the participant by Mastercard during onboarding.
+            </td>
+        </tr>
+        <tr>
+            <td>X-JWS-Signature</td>
+            <td>String</td>
+            <td>
+                JWS detached signature is applied to ensure data integrity.
+            </td>
+        </tr>
+    </table>
+
+    <h3> Sample Response Header </h3>
+        <div class="code-wrapper">
+        <pre>
+    <code>{
+        "<span class="json-key">X-Request-ID</span>" : "<span class="json-value">7eab4eab35a542e085add0363a49c035</span>",
+        "<span class="json-key">X-Product-ID</span>" : "<span class="json-value">PBARFP</span>",
+        "<span class="json-key">X-Participant-ID</span>" : "<span class="json-value">000545</span>",
+        "<span class="json-key">X-JWS-Signature</span>" : "<span class="json-value">eyJhbGciOiJSUzI1NiIsImtpZCI6Ik1LMGlrb1k3NFpNdUhnbncwSG1MNnpSbi9rRT0iLCJpYXQiOiIxNjc1OTYyMjA3IiwiY3JpdCI6WyJpYXQiXX0..XRHc_Q7mp49sr0CDL6Ps97uz4Lhl3XG_--JfeZrkj-4LK-3gzc7HsN0Jq4UjO_NX5ZlVp_tfL_GE1g9-vUT0NCfXmfbBXYEaC9CgFZIoU9F2PBegdZwHHmkDbu-5-t6kd2xo4UhaQ5VP1quWOD5yAs2a6MlQstT1iT-gPIW1teaiz4lgCmqbcTo6umjLKL-QsYvJ53Ngtb5rrF5WWQ1WKpGeq_PP1hGYbxDzcYBNZqGed-dXuGqpkWJ85JENJyOKDoskWM6cgs6OAjrmjTIFQ0qdfal91SUQtzJ49nbAiqMpROh79uYJ024jgtcQ_StqYJyJWYdLeUv1ge-kDJN0fw</span>",
+    }</code>
+    </pre>
+    <button class="copy-button" onclick="copyContent(this)">Copy</button>
+        </div>
+
+    <h3> Response Body Dictionary </h3>
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>initiatingPartyId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Unique identifier of the message sender.
+            </td>
+            <td>"ZAPP"</td>
+        </tr>
+        <tr>
+            <td>messageId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                A point-to-point unique identifier is assigned to every message by the message initiator.
+            </td>
+            <td>
+                "3bef00e542ec4be583b1b5d449799084"
+            </td>
+        </tr>
+        <tr>
+            <td>creationDateTime</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                ISO 8601 format date and time in Coordinated Universal Time (UTC) when this message was created.
+            </td>
+            <td>
+                "2020-11-20T06:57:24.465Z"
+            </td>
+        </tr>
+        <tr>
+            <td>originalMessageId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Original message identifier generated and sent by the initiator of the request message.
+            </td>
+            <td>
+                "7eab4eab35a542e085add0363a49c035"
+            </td>
+        </tr>
+    </table>
+
+    <h3> Sample Response Body </h3>
+        <div class="code-wrapper">
+        <pre>
+    <code>{
+        "<span class="json-key">initiatingPartyId</span>" : "<span class="json-value">ZAPP</span>",
+        "<span class="json-key">messageId</span>" : "<span class="json-value">3bef00e542ec4be583b1b5d449799084</span>",
+        "<span class="json-key">creationDateTime</span>" : "<span class="json-value">2020-11-20T06:57:24.465Z</span>",
+        "<span class="json-key">originalMessageId</span>" : "<span class="json-value">7eab4eab35a542e085add0363a49c035</span>"
+    }</code>
+        </pre>
+        <button class="copy-button" onclick="copyContent(this)">Copy</button>
+        </div>
+    <hr>
+    <br><br>
+</div>
+
+<div id="Page3" style="display:none">
+    <h2 style="color: rebeccapurple">[POST] /agreement-payment-requests</h2>
+    <p>
+        Enables DSP to receive the request for payment with agreement by a Creditor Service Provider (CSP) on behalf of its Creditor.
+    </p>
+
+    <h3> Request Header Dictionary</h3>
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td>X-Request-ID</td>
+            <td>Yes</td>
+            <td>
+                Each API request has an associated request identifier. 
+                It can be used to match the response to the request and 
+                used for tracing, troubleshooting and analysis purposes.
+            </td>
+        </tr>
+        <tr>
+            <td>X-Product-ID</td>
+            <td>Yes</td>
+            <td>
+                Unique identifier assigned to the product by Mastercard and given to the participant.
+            </td>
+        </tr>
+        <tr>
+            <td>X-Participant-ID</td>
+            <td>Yes</td>
+            <td>
+                Unique identifier assigned to the participant by Mastercard during onboarding.
+            </td>
+        </tr>
+        <tr>
+            <td>X-JWS-Signature</td>
+            <td>Yes</td>
+            <td>
+                JWS detached signature is applied to ensure data integrity.
+            </td>
+        </tr>
+        <tr>
+            <td>Idempotency-Key</td>
+            <td>Yes</td>
+            <td>
+                Unique identifier generated by the participant. Mastercard uses this identifier to recognize subsequent retries of the same request and ensure idempotent behaviour by sending the same response without repeating the operation again.
+            </td>
+        </tr>
+    </table>
+
+    <h3> Sample Request Header </h3>
+        <div class="code-wrapper">
+            <pre>
+    <code>{
+        "<span class="json-key">X-Request-ID</span>" : "<span class="json-value">7eab4eab35a542e085add0363a49c035</span>",
+        "<span class="json-key">X-Product-ID</span>" : "<span class="json-value">PBARFP</span>",
+        "<span class="json-key">X-Participant-ID</span>" : "<span class="json-value">000545</span>",
+        "<span class="json-key">X-JWS-Signature</span>" : "<span class="json-value">eyJhbGciOiJSUzI1NiIsImtpZCI6Ik1LMGlrb1k3NFpNdUhnbncwSG1MNnpSbi9rRT0iLCJpYXQiOiIxNjc1OTYyMjA3IiwiY3JpdCI6WyJpYXQiXX0..XRHc_Q7mp49sr0CDL6Ps97uz4Lhl3XG_--JfeZrkj-4LK-3gzc7HsN0Jq4UjO_NX5ZlVp_tfL_GE1g9-vUT0NCfXmfbBXYEaC9CgFZIoU9F2PBegdZwHHmkDbu-5-t6kd2xo4UhaQ5VP1quWOD5yAs2a6MlQstT1iT-gPIW1teaiz4lgCmqbcTo6umjLKL-QsYvJ53Ngtb5rrF5WWQ1WKpGeq_PP1hGYbxDzcYBNZqGed-dXuGqpkWJ85JENJyOKDoskWM6cgs6OAjrmjTIFQ0qdfal91SUQtzJ49nbAiqMpROh79uYJ024jgtcQ_StqYJyJWYdLeUv1ge-kDJN0fw</span>",
+        "<span class="json-key">Idempotency-Key</span>" : "<span class="json-value">7da7a728-f910-11e6-942a-68f728c1ba70</span>"  
+    }</code>
+        </pre>
+        <button class="copy-button" onclick="copyContent(this)">Copy</button>
+        </div>
+        
+    <h3> Request Body Dictionary</h3>
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>initiatingPartyId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Unique identifier of the message sender.
+            </td>
+            <td>"000545"</td>
+        </tr>
+        <tr>
+            <td>messageId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                A point-to-point unique identifier is assigned to every message by the message initiator.
+            </td>
+            <td>
+                "7eab4eab35a542e085add0363a49c035"
+            </td>
+        </tr>
+        <tr>
+            <td>creationDateTime</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                ISO 8601 format date and time in Coordinated Universal Time (UTC) when this message was created.
+            </td>
+            <td>
+                "2020-11-20T06:57:24.465Z"
+            </td>
+        </tr>
+        <tr>
+            <td>businessType</td>
+            <td>Yes</td>
+            <td>number</td>
+            <td>
+                Unique identifier assigned by Mastercard to define the commercial product construct.
+            </td>
+            <td>
+                3
+            </td>
+        </tr>
+    </table>
+
+    <br>
+
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>debtorId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Unique identifier of the Debtor provided to Mastercard by the DSP.
+            </td>
+            <td>
+                "Fxrsi5345"
+            </td>
+        </tr>
+        <tr>
+            <td>debtorServiceProviderId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Unique identifier assigned to the DSP during Mastercard onboarding.
+            </td>
+            <td>
+                "000369"
+            </td>
+        </tr>
+    </table>
+
+    <br>
+
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>creditorId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Unique identifier assigned to the Creditor by the CSP.
+            </td>
+            <td>
+                "VerizonoMobile000588"
+            </td>
+        </tr>
+        <tr>
+            <td>creditorServiceProviderId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Unique identifier assigned to the CSP during Mastercard onboarding.
+            </td>
+            <td>
+                "000645"
+            </td>
+        </tr>
+        <tr>
+            <td>creditorCategoryCode</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                The category code of the Creditor, also known as Merchant Category Code (MCC). Enables the classification of Creditors into specific categories based on the type of business, trade or services supplied.
+            </td>
+            <td>
+                "0742"
+            </td>
+        </tr>
+        <tr>
+            <td>creditorTradeName</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Name used by the Creditor in dealing with customers, which may not be the same as the one it uses for legal purposes.
+            </td>
+            <td>
+                "VerizonoMobileLtd"
+            </td>
+        </tr>
+        <tr>
+            <td>creditorReturnString</td>
+            <td></td>
+            <td>String</td>
+            <td>
+                Return String (in URL encoded format) that is passed to the DSP to return the Debtor back to the Creditor's checkout page.
+            </td>
+            <td>
+                "https://www.creditor.com/creditorreturnString"
+            </td>
+        </tr>
+        <tr>
+            <td>creditorLogoUrl</td>
+            <td></td>
+            <td>String</td>
+            <td>
+                Creditor's Logo (in URL encoded format). Can be used by the Debtor to display the Creditor's Logo.
+            </td>
+            <td>
+                https://www.cdn.com/creditorlogourl"
+            </td>
+        </tr>
+        <tr>
+            <td>creditorAccount</td>
+            <td></td>
+            <td>object</td>
+            <td>
+                Creditor's Account Information. Either the IBAN or account number should be used.
+            </td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>creditorAccounts</td>
+            <td></td>
+            <td>array[object]</td>
+            <td>
+                Creditor's Account Information. Either of the IBAN or Other account should be used. (This "creditorAccounts" block is deprecated, use "creditorAccount" block)
+            </td>
+            <td>
+                
+            </td>
+        </tr>
+    </table>
+
+    <br>
+
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>accountNumber</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Unique identifier for each account assigned by a financial institution or wallet provider. For example, IBAN. If sort code or routing number is 451223 and account number is 51223323, then after concatenation, the account number will be 45122351223323.
+            </td>
+            <td>
+                "45122351223323"
+            </td>
+        </tr>
+        <tr>
+            <td>clearingSystem</td>
+            <td></td>
+            <td>String</td>
+            <td>
+                Creditor or CSP requested real-time settlement method. 
+            </td>
+            <td>
+                "FPS"
+            </td>
+        </tr>
+    </table>
+
+    <br>
+
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>iban</td>
+            <td></td>
+            <td>String</td>
+            <td>
+                International Bank Account Number to uniquely identify the account.
+            </td>
+            <td>
+                "GB54HBUK60161331926819"
+            </td>
+        </tr>
+        <tr>
+            <td>other</td>
+            <td></td>
+            <td>object</td>
+            <td>
+                Unique identification of an account.
+            </td>
+            <td>
+                
+            </td>
+        </tr>
+        <tr>
+            <td>clearingSystems</td>
+            <td></td>
+            <td>array[String]</td>
+            <td>
+                Creditor or CSP requested real-time settlement method. 
+            </td>
+            <td>
+                ["FPS"]
+            </td>
+        </tr>
+    </table>
+
+    <br>
+
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>accountNumber</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Unique Identifier for each account assigned by a financial institution. For example, if sort code or routing number is 451223 and account number is 51223323, then after concatenation the account number will be 45122351223323.
+            </td>
+            <td>
+                "45122351223323"
+            </td>
+        </tr>
+    </table>
+
+    <br>
+
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>agreementId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>Unique identifier assigned by Mastercard to the agreement.</td>
+            <td>"a3e2a749088440eab8b40c926efe2931"</td>
+        </tr>
+        <tr>
+            <td>paymentRequestLifecycleId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>Unique identifier assigned by Mastercard, to identify the payment request in subsequent transactions or services.</td>
+            <td>"923123123123123100"</td>
+        </tr>
+        <tr>
+            <td>endToEndId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>Unique identifier assigned by Creditor to identify Payment Request in their system.</td>
+            <td>"7jhg5eab35a542e085add0363a4423o6"</td>
+        </tr>
+        <tr>
+            <td>instructionId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>Unique identifier for the transaction assigned by the transaction initiator (CSP).</td>
+            <td>"98dj4eab35a542e085add0363a40jk564"</td>
+        </tr>
+        <tr>
+            <td>accountServicerReference</td>
+            <td></td>
+            <td>String</td>
+            <td>Unique identifier assigned by Mastercard, to identify a particular payment (also referred to as settlement identifier) associated with a Payment Request.</td>
+            <td>"12254935976349876"</td>
+        </tr>
+        <tr>
+            <td>reconId</td>
+            <td></td>
+            <td>String</td>
+            <td>Reconciliation identifier assigned by Mastercard to the transaction.</td>
+            <td>"RECON1201202201"</td>
+        </tr>
+        <tr>
+            <td>confirmationExpiryTimeInterval</td>
+            <td>Yes</td>
+            <td>Number</td>
+            <td>Time window given in seconds within which the Payment Confirmation must be received by Mastercard.</td>
+            <td>150</td>
+        </tr>
+        <tr>
+            <td>paymentRequestType</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>Set by the Creditor/CSP to define the settlement type of the Payment Request.</td>
+            <td>"IMDT"</td>
+        </tr>
+        <tr>
+            <td>transactionCreationDateTime</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>ISO 8601 format date and time in Coordinated Universal Time (UTC) the Payment Request was created.</td>
+            <td>"2020-11-20T06:57:24.465Z"</td>
+        </tr>
+        <tr>
+            <td>instructedAmount</td>
+            <td>Yes</td>
+            <td>Object</td>
+            <td>The total amount of the payment request, as specified by the Creditor.</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>purpose</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>Set by Creditor/CSP to indicate the Payment Request type.</td>
+            <td>"ONLN"</td>
+        </tr>
+        <tr>
+            <td>categoryPurpose</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>Set by the Creditor/CSP to offer specific transaction processing.</td>
+            <td>"PYMT"</td>
+        </tr>
+        <tr>
+            <td>restriction</td>
+            <td></td>
+            <td>String</td>
+            <td>Set by the Creditor/CSP to communicate any restrictions to be verified by DSP before payment authorization.</td>
+            <td>"18PLUS"</td>
+        </tr>
+        <tr>
+            <td>creditAccountAllowed</td>
+            <td></td>
+            <td>boolean</td>
+            <td>Indicator to specify Credit account can be used for the payment.</td>
+            <td>true</td>
+        </tr>
+        <tr>
+            <td>strongCustomerAuthentication</td>
+            <td></td>
+            <td>boolean</td>
+            <td>Indicates a request from Creditor to DSP to step-up authentication for the transaction.</td>
+            <td>true</td>
+        </tr>
+    </table>
+
+    <br>
+
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>currency</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>ISO 4217 code for Currency.</td>
+            <td>"GBP"</td>
+        </tr>
+        <tr>
+            <td>value</td>
+            <td>Yes</td>
+            <td>number</td>
+            <td>Amount value.</td>
+            <td>100.25</td>
+        </tr>
+    </table>
+
+    <h3> Sample Request Body</h3>
+        <div class="code-wrapper">
+            <pre>
+    <code>{
+        "<span class="json-key">initiatingPartyId</span>" : "<span class="json-value">000545</span>",
+        "<span class="json-key">messageId</span>" : "<span class="json-value">7eab4eab35a542e085add0363a49c035</span>",
+        "<span class="json-key">creationDateTime</span>" : "<span class="json-value">2020-11-20T06:57:24.465Z</span>",
+        "<span class="json-key">businessType</span>" : "<span class="json-value">3</span>",
+        "<span class="json-key">debtor</span>" : {
+            "<span class="json-key">debtorId</span>" : "<span class="json-value">Fxrsi5345</span>",
+            "<span class="json-key">debtorServiceProviderId</span>" : "<span class="json-value">000369</span>"
+        },
+        "<span class="json-key">creditor</span>" : {
+            "<span class="json-key">creditorId</span>" : "<span class="json-value">VerizonoMobile000588</span>",
+            "<span class="json-key">creditorServiceProviderId</span>" : "<span class="json-value">000645</span>",
+            "<span class="json-key">creditorCategoryCode</span>" : "<span class="json-value">0742</span>",
+            "<span class="json-key">creditorTradeName</span>" : "<span class="json-value">VerizonoMobileLtd</span>",
+            "<span class="json-key">creditorReturnString</span>" : "<span class="json-value">https://www.creditor.com/creditorreturnString</span>",
+            "<span class="json-key">creditorLogoUrl</span>" : "<span class="json-value">https://www.cdn.com/creditorlogourl</span>",
+            "<span class="json-key">creditorAccount</span>" : {
+                "<span class="json-key">accountNumber</span>" : "<span class="json-value">45122351223323</span>",
+                "<span class="json-key">clearingSystem</span>" : "<span class="json-value">FPS</span>"
+            },
+            "<span class="json-key">creditorAccounts</span>" : [
+                {
+                    "<span class="json-key">iban</span>" : "<span class="json-value">GB54HBUK60161331926819</span>",
+                    "<span class="json-key">other</span>" : {
+                        "<span class="json-key">accountNumber</span>" : "<span class="json-value">45122351223323</span>"
+                    },
+                    "<span class="json-key">clearingSystems</span>" : [
+                        "<span class="json-value">FPS</span>"
+                    ]
+                }
+            ]
+        },
+        "<span class="json-key">transaction</span>" : {
+            "<span class="json-key">agreementId</span>" : "<span class="json-value">a3e2a749088440eab8b40c926efe2931</span>",
+            "<span class="json-key">paymentRequestLifecycleId</span>" : "<span class="json-value">923123123123123100</span>",
+            "<span class="json-key">endToEndId</span>" : "<span class="json-value">7jhg5eab35a542e085add0363a4423o6</span>",
+            "<span class="json-key">instructionId</span>" : "<span class="json-value">98dj4eab35a542e085add0363a40jk564</span>",
+            "<span class="json-key">accountServicerReference</span>" : "<span class="json-value">12254935976349876</span>",
+            "<span class="json-key">reconId</span>" : "<span class="json-value">RECON1201202201</span>",
+            "<span class="json-key">confirmationExpiryTimeInterval</span>" : "<span class="json-value">150</span>",
+            "<span class="json-key">paymentRequestType</span>" : "<span class="json-value">IMDT</span>",
+            "<span class="json-key">transactionCreationDateTime</span>" : "<span class="json-value">2020-11-20T06:57:24.465Z</span>",
+            "<span class="json-key">instructedAmount</span>" : {
+                "<span class="json-key">currency</span>" : "<span class="json-value">GBP</span>",
+                "<span class="json-key">value</span>" : "<span class="json-value">100.25</span>"
+            },
+            "<span class="json-key">purpose</span>" : "<span class="json-value">ONLN</span>",
+            "<span class="json-key">categoryPurpose</span>" : "<span class="json-value">PYMT</span>",
+            "<span class="json-key">restriction</span>" : "<span class="json-value">18PLUS</span>",
+            "<span class="json-key">creditAccountAllowed</span>" : "<span class="json-value">true</span>",
+            "<span class="json-key">strongCustomerAuthentication</span>" : "<span class="json-value">true</span>"
+        }
+    }</code>
+            </pre>
+            <button class="copy-button" onclick="copyContent(this)">Copy</button>    
+        </div>
+
+    <h3>Response Header Dictionary</h3>
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th>Type</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td>X-Request-ID</td>
+            <td>String</td>
+            <td>Each API request has an associated request identifier. It can be used to match the response to the request and for tracing, troubleshooting and analysis purposes.</td>
+        </tr>
+        <tr>
+            <td>X-Product-ID</td>
+            <td>String</td>
+            <td>Unique identifier assigned to the product by Mastercard and given to the participant.</td>
+        </tr>
+        <tr>
+            <td>X-Participant-ID</td>
+            <td>String</td>
+            <td>Unique identifier assigned to the participant by Mastercard during onboarding.</td>
+        </tr>
+        <tr>
+            <td>X-JWS-Signature</td>
+            <td>String</td>
+            <td>JWS detached signature is applied to ensure data integrity.</td>
+        </tr>
+    </table>
+
+    <h3>Sample Response Header</h3>
+        <div class="code-wrapper">
+            <pre>
+    <code>{
+        "<span class="json-key">X-Request-ID</span>" : "<span class="json-value">7eab4eab35a542e085add0363a49c035</span>",
+        "<span class="json-key">X-Product-ID</span>" : "<span class="json-value">PBARFP</span>",
+        "<span class="json-key">X-Participant-ID</span>" : "<span class="json-value">000545</span>",
+        "<span class="json-key">X-JWS-Signature</span>" : "<span class="json-value">eyJhbGciOiJSUzI1NiIsImtpZCI6Ik1LMGlrb1k3NFpNdUhnbncwSG1MNnpSbi9rRT0iLCJpYXQiOiIxNjc1OTYyMjA3IiwiY3JpdCI6WyJpYXQiXX0..XRHc_Q7mp49sr0CDL6Ps97uz4Lhl3XG_--JfeZrkj-4LK-3gzc7HsN0Jq4UjO_NX5ZlVp_tfL_GE1g9-vUT0NCfXmfbBXYEaC9CgFZIoU9F2PBegdZwHHmkDbu-5-t6kd2xo4UhaQ5VP1quWOD5yAs2a6MlQstT1iT-gPIW1teaiz4lgCmqbcTo6umjLKL-QsYvJ53Ngtb5rrF5WWQ1WKpGeq_PP1hGYbxDzcYBNZqGed-dXuGqpkWJ85JENJyOKDoskWM6cgs6OAjrmjTIFQ0qdfal91SUQtzJ49nbAiqMpROh79uYJ024jgtcQ_StqYJyJWYdLeUv1ge-kDJN0fw</span>",
+    }</code>
+        </pre>
+        <button class="copy-button" onclick="copyContent(this)">Copy</button>
+        </div>
+        
+    <h3>Response Body Dictionary</h3>
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>messageId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>A point-to-point unique identifier is assigned to every message by the message initiator.</td>
+            <td>"3bef00e542ec4be583b1b5d449799084"</td>
+        </tr>
+        <tr>
+            <td>creationDateTime</td>
+            <td>Yes</td>
+            <td>String (ISO 8601 format)</td>
+            <td>ISO 8601 format date and time in Coordinated Universal Time (UTC) when this message was created.</td>
+            <td>"2020-11-20T06:57:24.465Z"</td>
+        </tr>
+        <tr>
+            <td>initiatingPartyId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>Unique identifier of the message sender.</td>
+            <td>"000545"</td>
+        </tr>
+        <tr>
+            <td>originalMessageId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>Original message identifier generated and sent by the initiator of the request message.</td>
+            <td>"7eab4eab35a542e085add0363a49c035"</td>
+        </tr>
+    </table>
+
+    <h3>Sample Response Body</h3>
+        <div class="code-wrapper">
+            <pre>
+    <code>{
+        "<span class="json-key">messageId</span>" : "<span class="json-value">3bef00e542ec4be583b1b5d449799084</span>",
+        "<span class="json-key">creationDateTime</span>" : "<span class="json-value">2020-11-20T06:57:24.465Z</span>",
+        "<span class="json-key">initiatingPartyId</span>" : "<span class="json-value">000545</span>",
+        "<span class="json-key">originalMessageId</span>" : "<span class="json-value">7eab4eab35a542e085add0363a49c035</span>"
+    }</code>
+            </pre>
+            <button class="copy-button" onclick="copyContent(this)">Copy</button>
+        </div>
+             
+    <hr>
+    <br><br>
+</div>
+
+<div id="Page4" style="display:none">
+    <h2 style="color: rebeccapurple">[POST] /payment-requests/{payment_request_lifecycle_id}/step-up-advices</h2>
+    <p>
+        Enables DSP to send step-up advice to CSP through Mastercard.
+    </p>
+
+    <h3> Request Header Dictionary </h3>
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td>X-Request-ID</td>
+            <td>Yes</td>
+            <td>
+                Each API request has an associated request identifier. 
+                It can be used to match the response to the request and 
+                used for tracing, troubleshooting and analysis purposes.
+            </td>
+        </tr>
+        <tr>
+            <td>X-Product-ID</td>
+            <td>Yes</td>
+            <td>
+                Unique identifier assigned to the product by Mastercard and given to the participant.
+            </td>
+        </tr>
+        <tr>
+            <td>X-Participant-ID</td>
+            <td>Yes</td>
+            <td>
+                Unique identifier assigned to the participant by Mastercard during onboarding.
+            </td>
+        </tr>
+        <tr>
+            <td>X-JWS-Signature</td>
+            <td>Yes</td>
+            <td>
+                JWS detached signature is applied to ensure data integrity.
+            </td>
+        </tr>
+        <tr>
+            <td>payment_request_lifecycle_id</td>
+            <td>Yes</td>
+            <td>
+                Unique identifier assigned by Mastercard, to identify the payment request in subsequent transactions or services.
+            </td>
+        </tr>
+    </table>
+
+    <h3> Sample Request Header </h3>
+        <div class="code-wrapper">
+            <pre>
+    <code>{
+        "<span class="json-key">X-Request-ID</span>" : "<span class="json-value">7eab4eab35a542e085add0363a49c035</span>",
+        "<span class="json-key">X-Product-ID</span>" : "<span class="json-value">PBARFP</span>",
+        "<span class="json-key">X-Participant-ID</span>" : "<span class="json-value">000545</span>",
+        "<span class="json-key">X-JWS-Signature</span>" : "<span class="json-value">eyJhbGciOiJSUzI1NiIsImtpZCI6Ik1LMGlrb1k3NFpNdUhnbncwSG1MNnpSbi9rRT0iLCJpYXQiOiIxNjc1OTYyMjA3IiwiY3JpdCI6WyJpYXQiXX0..XRHc_Q7mp49sr0CDL6Ps97uz4Lhl3XG_--JfeZrkj-4LK-3gzc7HsN0Jq4UjO_NX5ZlVp_tfL_GE1g9-vUT0NCfXmfbBXYEaC9CgFZIoU9F2PBegdZwHHmkDbu-5-t6kd2xo4UhaQ5VP1quWOD5yAs2a6MlQstT1iT-gPIW1teaiz4lgCmqbcTo6umjLKL-QsYvJ53Ngtb5rrF5WWQ1WKpGeq_PP1hGYbxDzcYBNZqGed-dXuGqpkWJ85JENJyOKDoskWM6cgs6OAjrmjTIFQ0qdfal91SUQtzJ49nbAiqMpROh79uYJ024jgtcQ_StqYJyJWYdLeUv1ge-kDJN0fw</span>",
+        "<span class="json-key">payment_request_lifecycle_id</span>" : "<span class="json-value">128361739311340082</span>"  
+    }</code>
+        </pre>
+
+        <button class="copy-button" onclick="copyContent(this)">Copy</button>
+        </div>
+        
+    <h3> Request Body Dictionary </h3>
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>initiatingPartyId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Unique identifier of the message sender.
+            </td>
+            <td>"000545"</td>
+        </tr>
+        <tr>
+            <td>messageId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                A point-to-point unique identifier is assigned to every message by the message initiator.
+            </td>
+            <td>
+                "7eab4eab35a542e085add0363a49c035"
+            </td>
+        </tr>
+        <tr>
+            <td>creationDateTime</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                ISO 8601 format date and time in Coordinated Universal Time (UTC) when this message was created.
+            </td>
+            <td>
+                "2020-11-20T06:57:24.465Z"
+            </td>
+        </tr>
+        <tr>
+            <td>businessType</td>
+            <td>Yes</td>
+            <td>number</td>
+            <td>
+                Unique identifier assigned by Mastercard to define the commercial product construct.
+            </td>
+            <td>
+                3
+            </td>
+        </tr>
+        <tr>
+            <td>debtorServiceProviderId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Unique identifier assigned to the DSP during Mastercard onboarding.
+            </td>
+            <td>
+                "000369"
+            </td>
+        </tr>
+    </table>
+
+    <br>
+
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>paymentRequestLifecycleId</td>
+            <td>yes</td>
+            <td>String</td>
+            <td>Unique identifier assigned by Mastercard, to identify the payment request in subsequent transactions or services.</td>
+            <td>"923123123123123100"</td>
+        </tr>
+        <tr>
+            <td>stepUpMessage</td>
+            <td>yes</td>
+            <td>String</td>
+            <td>Text message that DSP will be providing to display to the Debtor on Creditor website or application.</td>
+            <td>"Please go to your Banking App and Authorise the transaction"</td>
+        </tr>
+        <tr>
+            <td>applicationUrl</td>
+            <td></td>
+            <td>String</td>
+            <td>URL that will be used by the Debtor to open the banking app from Creditor's website or application on a single device journey. Creditor should only use this when it's a single device journey.</td>
+            <td>"zapp://812768758639876189746"</td>
+        </tr>
+    </table>
+       
+    <h3> Sample Request Body </h3>
+    <div class="code-wrapper">
+        <pre>
+    <code>{
+        "<span class="json-key">initiatingPartyId</span>": "<span class="json-value">000545</span>",
+        "<span class="json-key">messageId</span>": "<span class="json-value">7eab4eab35a542e085add0363a49c035</span>",
+        "<span class="json-key">creationDateTime</span>": "<span class="json-value">2020-11-20T06:57:24.465Z</span>",
+        "<span class="json-key">businessType</span>": <span class="json-value">3</span>,
+        "<span class="json-key">debtorServiceProviderId</span>": "<span class="json-value">000369</span>",
+        "<span class="json-key">transaction</span>": {
+            "<span class="json-key">paymentRequestLifecycleId</span>": "<span class="json-value">923123123123123100</span>",
+            "<span class="json-key">stepUpMessage</span>": "<span class="json-value">Please go to your Banking App and Authorise the transaction</span>",
+            "<span class="json-key">applicationUrl</span>": "<span class="json-value">zapp://812768758639876189746</span>"
+        }
+    }</code>
+        </pre>
+        <button class="copy-button" onclick="copyContent(this)">Copy</button>
+    </div>
+        
+    <h3>Response Header Dictionary</h3>
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th>Type</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td>X-Request-ID</td>
+            <td>String</td>
+            <td>Each API request has an associated request identifier. It can be used to match the response to the request and for tracing, troubleshooting and analysis purposes.</td>
+        </tr>
+        <tr>
+            <td>X-Product-ID</td>
+            <td>String</td>
+            <td>Unique identifier assigned to the product by Mastercard and given to the participant.</td>
+        </tr>
+        <tr>
+            <td>X-Participant-ID</td>
+            <td>String</td>
+            <td>Unique identifier assigned to the participant by Mastercard during onboarding.</td>
+        </tr>
+        <tr>
+            <td>X-JWS-Signature</td>
+            <td>String</td>
+            <td>JWS detached signature is applied to ensure data integrity.</td>
+        </tr>
+    </table>
+
+    <h3>Sample Response Header</h3>
+        <div class="code-wrapper">
+            <pre>
+    <code>{
+        "<span class="json-key">X-Request-ID</span>" : "<span class="json-value">7eab4eab35a542e085add0363a49c035</span>",
+        "<span class="json-key">X-Product-ID</span>" : "<span class="json-value">PBARFP</span>",
+        "<span class="json-key">X-Participant-ID</span>" : "<span class="json-value">000545</span>",
+        "<span class="json-key">X-JWS-Signature</span>" : "<span class="json-value">eyJhbGciOiJSUzI1NiIsImtpZCI6Ik1LMGlrb1k3NFpNdUhnbncwSG1MNnpSbi9rRT0iLCJpYXQiOiIxNjc1OTYyMjA3IiwiY3JpdCI6WyJpYXQiXX0..XRHc_Q7mp49sr0CDL6Ps97uz4Lhl3XG_--JfeZrkj-4LK-3gzc7HsN0Jq4UjO_NX5ZlVp_tfL_GE1g9-vUT0NCfXmfbBXYEaC9CgFZIoU9F2PBegdZwHHmkDbu-5-t6kd2xo4UhaQ5VP1quWOD5yAs2a6MlQstT1iT-gPIW1teaiz4lgCmqbcTo6umjLKL-QsYvJ53Ngtb5rrF5WWQ1WKpGeq_PP1hGYbxDzcYBNZqGed-dXuGqpkWJ85JENJyOKDoskWM6cgs6OAjrmjTIFQ0qdfal91SUQtzJ49nbAiqMpROh79uYJ024jgtcQ_StqYJyJWYdLeUv1ge-kDJN0fw</span>"  
+    }</code>
+        </pre>
+
+        <button class="copy-button" onclick="copyContent(this)">Copy</button>
+        </div>
+        
+    <h3>Response Body Dictionary</h3>
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>initiatingPartyId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>Unique identifier of the message sender.</td>
+            <td>"ZAPP"</td>
+        </tr>
+        <tr>
+            <td>messageId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>A point-to-point unique identifier is assigned to every message by the message initiator.</td>
+            <td>"3bef00e542ec4be583b1b5d449799084"</td>
+        </tr>
+        <tr>
+            <td>creationDateTime</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>ISO 8601 format date and time in Coordinated Universal Time (UTC) when this message was created.</td>
+            <td>"2020-11-20T06:57:24.465Z"</td>
+        </tr> 
+        <tr>
+            <td>originalMessageId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>Original message identifier generated and sent by the initiator of the request message.</td>
+            <td>"7eab4eab35a542e085add0363a49c035"</td>
+        </tr>
+    </table>
+
+    <h3>Sample Response Body</h3>
+        <div class="code-wrapper">
+            <pre>
+    <code>{
+        "<span class="json-key">initiatingPartyId</span>" : "<span class="json-value">ZAPP</span>",
+        "<span class="json-key">messageId</span>" : "<span class="json-value">3bef00e542ec4be583b1b5d449799084</span>",
+        "<span class="json-key">creationDateTime</span>" : "<span class="json-value">2020-11-20T06:57:24.465Z</span>",
+        "<span class="json-key">originalMessageId</span>" : "<span class="json-value">7eab4eab35a542e085add0363a49c035</span>"
+    }</code>
+            </pre>
+            <button class="copy-button" onclick="copyContent(this)">Copy</button>
+        </div>
+             
+    <hr>
+    <br><br>
+</div>
+
+<div id="Page5" style="display:none">
+    <h2 style="color: rebeccapurple">[POST] /payment-requests/{payment_request_lifecycle_id}/payment-confirmation-advices</h2>
+    <p>
+        Enables DSP to send payment status information for the request for payment message.
+    </p>
+
+    <h3> Request Header Dictionary </h3>
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td>X-Request-ID</td>
+            <td>Yes</td>
+            <td>
+                Each API request has an associated request identifier. 
+                It can be used to match the response to the request and 
+                used for tracing, troubleshooting and analysis purposes.
+            </td>
+        </tr>
+        <tr>
+            <td>X-Product-ID</td>
+            <td>Yes</td>
+            <td>
+                Unique identifier assigned to the product by Mastercard and given to the participant.
+            </td>
+        </tr>
+        <tr>
+            <td>X-Participant-ID</td>
+            <td>Yes</td>
+            <td>
+                Unique identifier assigned to the participant by Mastercard during onboarding.
+            </td>
+        </tr>
+        <tr>
+            <td>X-JWS-Signature</td>
+            <td>Yes</td>
+            <td>
+                JWS detached signature is applied to ensure data integrity.
+            </td>
+        </tr>
+        <tr>
+            <td>Idempotency-Key</td>
+            <td>Yes</td>
+            <td>
+                Unique identifier generated by the participant. Mastercard uses this identifier to recognize subsequent retries of the same request and ensure idempotent behaviour by sending the same response without repeating the operation again.
+            </td>
+        </tr>
+        <tr>
+            <td>payment_request_lifecycle_id</td>
+            <td>Yes</td>
+            <td>
+                Unique identifier assigned by Mastercard, to identify the payment request in subsequent transactions or services.
+            </td>
+        </tr>
+    </table>
+
+    <h3> Sample Request Header </h3>
+        <div class="code-wrapper">
+                <pre>
+    <code>{
+        "<span class="json-key">X-Request-ID</span>" : "<span class="json-value">7eab4eab35a542e085add0363a49c035</span>",
+        "<span class="json-key">X-Product-ID</span>" : "<span class="json-value">PBARFP</span>",
+        "<span class="json-key">X-Participant-ID</span>" : "<span class="json-value">000545</span>",
+        "<span class="json-key">X-JWS-Signature</span>" : "<span class="json-value">eyJhbGciOiJSUzI1NiIsImtpZCI6Ik1LMGlrb1k3NFpNdUhnbncwSG1MNnpSbi9rRT0iLCJpYXQiOiIxNjc1OTYyMjA3IiwiY3JpdCI6WyJpYXQiXX0..XRHc_Q7mp49sr0CDL6Ps97uz4Lhl3XG_--JfeZrkj-4LK-3gzc7HsN0Jq4UjO_NX5ZlVp_tfL_GE1g9-vUT0NCfXmfbBXYEaC9CgFZIoU9F2PBegdZwHHmkDbu-5-t6kd2xo4UhaQ5VP1quWOD5yAs2a6MlQstT1iT-gPIW1teaiz4lgCmqbcTo6umjLKL-QsYvJ53Ngtb5rrF5WWQ1WKpGeq_PP1hGYbxDzcYBNZqGed-dXuGqpkWJ85JENJyOKDoskWM6cgs6OAjrmjTIFQ0qdfal91SUQtzJ49nbAiqMpROh79uYJ024jgtcQ_StqYJyJWYdLeUv1ge-kDJN0fw</span>",
+        "<span class="json-key">Idempotency-Key</span>" : "<span class="json-value">7da7a728-f910-11e6-942a-68f728c1ba70</span>",
+        "<span class="json-key">payment_request_lifecycle_id</span>" : "<span class="json-value">128361739311340082</span>"  
+    }</code>
+            </pre>
+
+            <button class="copy-button" onclick="copyContent(this)">Copy</button>
+        </div>
+    
+    <h3>Request Body Dictionary</h3>
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>initiatingPartyId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Unique identifier of the message sender.
+            </td>
+            <td>"000545"</td>
+        </tr>
+        <tr>
+            <td>messageId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                A point-to-point unique identifier is assigned to every message by the message initiator.
+            </td>
+            <td>"7eab4eab35a542e085add0363a49c035"</td>
+        </tr>
+        <tr>
+            <td>creationDateTime</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                ISO 8601 format date and time in Coordinated Universal Time (UTC) when this message was created.
+            </td>
+            <td>"2020-11-20T06:57:24.465Z"</td>
+        </tr>
+        <tr>
+            <td>businessType</td>
+            <td>Yes</td>
+            <td>number</td>
+            <td>
+                Unique identifier assigned by Mastercard to define the commercial product construct.
+            </td>
+            <td>3</td>
+        </tr>
+        <tr>
+            <td>paymentRequestLifecycleId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Unique identifier assigned by Mastercard to identify the payment request in subsequent transactions or services.
+            </td>
+            <td>"923123123123123100"</td>
+        </tr>
+        <tr>
+            <td>acceptanceDateTime</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                ISO 8601 format date and time in Coordinated Universal Time (UTC) on when the Debtor has accepted or rejected the request.
+            </td>
+            <td>"2020-11-20T06:57:24.465Z"</td>
+        </tr>
+        <tr>
+            <td>creditAccountUsed</td>
+            <td></td>
+            <td>boolean</td>
+            <td>
+                Indicator to specify when a Credit account is used for the payment.
+            </td>
+            <td>true</td>
+        </tr>
+        <tr>
+            <td>authorisedByDebtor</td>
+            <td></td>
+            <td>boolean</td>
+            <td>
+                Indicator whether the Consumer authorised the account on file transaction which was stepped up.
+            </td>
+            <td>false</td>
+        </tr>
+        <tr>
+            <td style="font-size:11px">paymentRequestStatusRetrievalLifecycleId</td>
+            <td></td>
+            <td>String</td>
+            <td>
+                Unique identifier assigned by Mastercard to identify the Payment Request Status Retrieval request in subsequent transactions or services.
+            </td>
+            <td>"111123123123123111"</td>
+        </tr>
+    </table>
+
+    <br>
+
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>debtorId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Unique identifier of the Debtor provided to Mastercard by the DSP.
+            </td>
+            <td>"Fxrsi5345"</td>
+        </tr>
+        <tr>
+            <td>debtorServiceProviderId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Unique identifier assigned to the DSP during Mastercard onboarding.
+            </td>
+            <td>"000369"</td>
+        </tr>
+    </table>
+
+    <br>
+
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>transactionStatus</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Status of the transaction.
+            </td>
+            <td>"RJCT"</td>
+        </tr>
+        <tr>
+            <td>transactionStatusReason</td>
+            <td></td>
+            <td>String</td>
+            <td>
+                Reason for declined transaction.
+            </td>
+            <td>"FRDS"</td>
+        </tr>
+    </table>
+
+    <br>
+
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>paymentReference</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Unique Payment Reference of the real-time settlement method provided by DSP.
+            </td>
+            <td>"y18dvGsj3GJ57Tt"</td>
+        </tr>
+        <tr>
+            <td>clearingSystem</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Creditor or CSP requested real-time settlement method.
+            </td>
+            <td>"FPS"</td>
+        </tr>
+        <tr>
+            <td>paymentDateTime</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                ISO 8601 format date and time in Coordinated Universal Time (UTC), when real-time settlement is initiated.
+            </td>
+            <td>"2020-11-20T06:57:24.465Z"</td>
+        </tr>
+    </table>
+
+    <br>
+
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>currency</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                ISO 4217 code for Currency.
+            </td>
+            <td>"GBP"</td>
+        </tr>
+        <tr>
+            <td>value</td>
+            <td>Yes</td>
+            <td>number</td>
+            <td>
+                Amount value.
+            </td>
+            <td>100.25</td>
+        </tr>
+    </table>
+
+    <br>
+
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>agreementConfirmed</td>
+            <td>Yes</td>
+            <td>boolean</td>
+            <td>
+                Indicates true whether Agreement was confirmed by Debtor. False for any other reasons.
+            </td>
+            <td>true</td>
+        </tr>
+        <tr>
+            <td>agreementStatusReason</td>
+            <td></td>
+            <td>String</td>
+            <td>
+                Reason for declined agreement.
+            </td>
+            <td>"SYSP"</td>
+        </tr>
+        <tr>
+            <td>accountNickname</td>
+            <td></td>
+            <td>String</td>
+            <td>
+                Nickname of the account is passed when agreementConfirmed is true.
+            </td>
+            <td>"bankname_account"</td>
+        </tr>
+    </table>
+            
+    <h3> Sample Request Body </h3>
+        <div class="code-wrapper">
+                <pre>
+    <code>{
+        "<span class="json-key">initiatingPartyId</span>" : "<span class="json-value">000545</span>",
+        "<span class="json-key">messageId</span>" : "<span class="json-value">7eab4eab35a542e085add0363a49c035</span>",
+        "<span class="json-key">creationDateTime</span>" : "<span class="json-value">2020-11-20T06:57:24.465Z</span>",
+        "<span class="json-key">businessType</span>" : <span class="json-value">3</span>,
+        "<span class="json-key">paymentRequestLifecycleId</span>" : "<span class="json-value">923123123123123100</span>",
+        "<span class="json-key">acceptanceDateTime</span>" : "<span class="json-value">2020-11-20T06:57:24.465Z</span>",
+        "<span class="json-key">creditAccountUsed</span>" : <span class="json-value">true</span>,
+        "<span class="json-key">authorisedByDebtor</span>" : <span class="json-value">false</span>,
+        "<span class="json-key">paymentRequestStatusRetrievalLifecycleId</span>" : "<span class="json-value">111123123123123111</span>",
+        "<span class="json-key">debtor</span>" : {
+            "<span class="json-key">debtorId</span>" : "<span class="json-value">Fxrsi5345</span>",
+            "<span class="json-key">debtorServiceProviderId</span>" : "<span class="json-value">000369</span>"
+        },
+        "<span class="json-key">status</span>" : {
+            "<span class="json-key">transactionStatus</span>" : "<span class="json-value">RJCT</span>",
+            "<span class="json-key">transactionStatusReason</span>" : "<span class="json-value">FRDS</span>"
+        },
+        "<span class="json-key">payment</span>" : {
+            "<span class="json-key">paymentReference</span>" : "<span class="json-value">y18dvGsj3GJ57Tt</span>",
+            "<span class="json-key">clearingSystem</span>" : "<span class="json-value">FPS</span>",
+            "<span class="json-key">paymentDateTime</span>" : "<span class="json-value">2020-11-20T06:57:24.465Z</span>",
+            "<span class="json-key">paymentAmount</span>" : {
+                "<span class="json-key">currency</span>" : "<span class="json-value">GBP</span>",
+                "<span class="json-key">value</span>" : <span class="json-value">100.25</span>
+            }
+        },
+        "<span class="json-key">agreementConfirmation</span>" : {
+            "<span class="json-key">agreementConfirmed</span>" : <span class="json-value">true</span>,
+            "<span class="json-key">agreementStatusReason</span>" : "<span class="json-value">SYSP</span>",
+            "<span class="json-key">accountNickname</span>" : "<span class="json-value">bankname_account</span>"
+        }
+    }</code>
+                </pre>
+            
+                <button class="copy-button" onclick="copyContent(this)">Copy</button>
+        </div>
+            
+    <h3>Response Header Dictionary</h3>
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th>Type</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td>X-Request-ID</td>
+            <td>String</td>
+            <td>Each API request has an associated request identifier. It can be used to match the response to the request and for tracing, troubleshooting and analysis purposes.</td>
+        </tr>
+        <tr>
+            <td>X-Product-ID</td>
+            <td>String</td>
+            <td>Unique identifier assigned to the product by Mastercard and given to the participant.</td>
+        </tr>
+        <tr>
+            <td>X-Participant-ID</td>
+            <td>String</td>
+            <td>Unique identifier assigned to the participant by Mastercard during onboarding.</td>
+        </tr>
+        <tr>
+            <td>X-JWS-Signature</td>
+            <td>String</td>
+            <td>JWS detached signature is applied to ensure data integrity.</td>
+        </tr>
+    </table>
+
+    <h3>Sample Response Header</h3>
+        <div class="code-wrapper">
+            <pre>
+    <code>{
+        "<span class="json-key">X-Request-ID</span>" : "<span class="json-value">7eab4eab35a542e085add0363a49c035</span>",
+        "<span class="json-key">X-Product-ID</span>" : "<span class="json-value">PBARFP</span>",
+        "<span class="json-key">X-Participant-ID</span>" : "<span class="json-value">000545</span>",
+        "<span class="json-key">X-JWS-Signature</span>" : "<span class="json-value">eyJhbGciOiJSUzI1NiIsImtpZCI6Ik1LMGlrb1k3NFpNdUhnbncwSG1MNnpSbi9rRT0iLCJpYXQiOiIxNjc1OTYyMjA3IiwiY3JpdCI6WyJpYXQiXX0..XRHc_Q7mp49sr0CDL6Ps97uz4Lhl3XG_--JfeZrkj-4LK-3gzc7HsN0Jq4UjO_NX5ZlVp_tfL_GE1g9-vUT0NCfXmfbBXYEaC9CgFZIoU9F2PBegdZwHHmkDbu-5-t6kd2xo4UhaQ5VP1quWOD5yAs2a6MlQstT1iT-gPIW1teaiz4lgCmqbcTo6umjLKL-QsYvJ53Ngtb5rrF5WWQ1WKpGeq_PP1hGYbxDzcYBNZqGed-dXuGqpkWJ85JENJyOKDoskWM6cgs6OAjrmjTIFQ0qdfal91SUQtzJ49nbAiqMpROh79uYJ024jgtcQ_StqYJyJWYdLeUv1ge-kDJN0fw</span>"  
+    }</code>
+        </pre>
+
+        <button class="copy-button" onclick="copyContent(this)">Copy</button>
+        </div>
+    
+    <h3>Response Body Dictionary</h3>
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>initiatingPartyId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>Unique identifier of the message sender.</td>
+            <td>"ZAPP"</td>
+        </tr>
+        <tr>
+            <td>messageId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>A point-to-point unique identifier assigned to every message by the message initiator.</td>
+            <td>"3bef00e542ec4be583b1b5d449799084"</td>
+        </tr>
+        <tr>
+            <td>creationDateTime</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>ISO 8601 format date and time in Coordinated Universal Time (UTC) when this message was created.</td>
+            <td>"2020-11-20T06:57:24.465Z"</td>
+        </tr>
+        <tr>
+            <td>originalMessageId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>Original message identifier generated and sent by the initiator of the request message.</td>
+            <td>"7eab4eab35a542e085add0363a49c035"</td>
+        </tr>
+        <tr>
+            <td>paymentRequestLifecycleId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>Unique identifier assigned by Mastercard to identify the payment request in subsequent transactions or services.</td>
+            <td>"923123123123123100"</td>
+        </tr>
+    </table>
+    
+    <br>
+
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>paymentRequestStatus</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>Status of the Payment Request returned by Mastercard.</td>
+            <td>"RJCT"</td>
+        </tr>
+    </table>
+    
+    <br>
+
+    <table>
+        <tr>
+            <th>Parameter Name</th>
+            <th style="color:red">Required?</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Example</th>
+        </tr>
+        <tr>
+            <td>agreementId</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Unique identifier assigned by Mastercard to the agreement.
+            </td>
+            <td>"a3e2a749088440eab8b40c926efe2931"</td>
+        </tr>
+        <tr>
+            <td>agreementStatus</td>
+            <td>Yes</td>
+            <td>String</td>
+            <td>
+                Status of the Agreement updated by DSP to either Approved or Rejected or Deleted.
+            </td>
+            <td>"APPR"</td>
+        </tr>
+    </table>
+    
+    <h3>Sample Response Body</h3>
+        <div class="code-wrapper">
+            <pre>
+    <code>{
+        "<span class="json-key">initiatingPartyId</span>" : "<span class="json-value">ZAPP</span>",
+        "<span class="json-key">messageId</span>" : "<span class="json-value">3bef00e542ec4be583b1b5d449799084</span>",
+        "<span class="json-key">creationDateTime</span>" : "<span class="json-value">2020-11-20T06:57:24.465Z</span>",
+        "<span class="json-key">originalMessageId</span>" : "<span class="json-value">7eab4eab35a542e085add0363a49c035</span>",
+        "<span class="json-key">paymentRequestLifecycleId</span>" : "<span class="json-value">923123123123123100</span>",
+        "<span class="json-key">requestStatus</span>" : {
+            "<span class="json-key">paymentRequestStatus</span>" : "<span class="json-value">RJCT</span>"
+        },
+        "<span class="json-key">agreementStatus</span>" : {
+            "<span class="json-key">agreementId</span>" : "<span class="json-value">a3e2a749088440eab8b40c926efe2931</span>",
+            "<span class="json-key">agreementStatus</span>" : "<span class="json-value">APPR</span>"
+        }
+    }</code>
+            </pre>
+        
+            <button class="copy-button" onclick="copyContent(this)">Copy</button>
+        </div>
+        
+    <hr>
+    <br><br>        
+</div>
+
+<button onclick="scrollToTop()" id="backToTopBtn" title="Go to top">Back to Top</button>
+    </body>
+</html>
